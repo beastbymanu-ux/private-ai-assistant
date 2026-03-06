@@ -1,0 +1,68 @@
+version: "3.8"
+
+# ============================================================
+# Private AI Assistant — Docker Compose
+#
+# Full local AI stack:
+#   - Ollama (LLM inference)
+#   - AI Assistant (RAG + Streamlit UI)
+#
+# Zero external API calls. All data stays on this machine.
+# ============================================================
+
+services:
+  # --------------------------------------------------------
+  # Ollama — Local LLM Server
+  # Runs Llama 3 / Mistral locally
+  # --------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: private-ai-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    # Uncomment for GPU support (NVIDIA):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # --------------------------------------------------------
+  # AI Assistant — RAG Pipeline + Web UI
+  # Streamlit interface connected to Ollama + ChromaDB
+  # --------------------------------------------------------
+  assistant:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: private-ai-assistant
+    ports:
+      - "8501:8501"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3
+      - DOCS_DIR=/app/documents
+      - CHROMA_PERSIST_DIR=/app/chroma_db
+    volumes:
+      - ./documents:/app/documents:ro
+      - chroma_data:/app/chroma_db
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+    driver: local
+  chroma_data:
+    driver: local

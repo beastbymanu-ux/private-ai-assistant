@@ -1,0 +1,14 @@
+# Vector store
+chroma_db/
+
+# Documents (may contain sensitive data)
+documents/*.pdf
+documents/*.csv
+
+# Python
+__pycache__/
+*.pyc
+.env
+
+# Docker
+*.log

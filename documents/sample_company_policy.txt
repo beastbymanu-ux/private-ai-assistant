@@ -1,0 +1,73 @@
+ACME Corporation — Internal AI Usage Policy
+Last Updated: January 2026
+Classification: Internal
+
+1. PURPOSE
+
+This policy establishes guidelines for the use of artificial intelligence tools
+and large language models within ACME Corporation operations. All employees
+must comply with these guidelines when using AI in their work.
+
+2. APPROVED AI TOOLS
+
+The following AI tools are approved for internal use:
+- ACME Internal Assistant (self-hosted, approved for all data classifications)
+- Python-based automation scripts (approved by IT department)
+- Internal data analysis tools running on company servers
+
+The following tools are NOT approved for use with company data:
+- ChatGPT (OpenAI) — data is sent to external servers
+- Google Gemini — data may be used for training
+- Any cloud-based AI service not listed above
+
+3. DATA CLASSIFICATION AND AI
+
+3.1 Confidential Data
+Confidential data must NEVER be processed through external AI services.
+This includes: customer records, financial data, employee information,
+trade secrets, and any data subject to GDPR or other regulatory requirements.
+
+3.2 Internal Data
+Internal data may only be processed through self-hosted AI tools that
+run entirely on ACME infrastructure.
+
+3.3 Public Data
+Public data may be processed through approved external tools with
+manager approval.
+
+4. COMPLIANCE REQUIREMENTS
+
+4.1 GDPR Compliance
+All AI processing of personal data must comply with GDPR Article 5
+principles: lawfulness, fairness, transparency, purpose limitation,
+data minimization, accuracy, storage limitation, and integrity.
+
+4.2 Data Residency
+All AI processing must occur within the EU. No data may be transferred
+to servers outside the European Economic Area without explicit approval
+from the Data Protection Officer.
+
+4.3 Audit Trail
+All AI-assisted decisions must maintain a complete audit trail,
+including: input data, model used, output generated, and any
+human review applied.
+
+5. INCIDENT REPORTING
+
+Any suspected data breach involving AI tools must be reported to the
+IT Security team within 24 hours. This includes accidental submission
+of confidential data to external AI services.
+
+6. TRAINING REQUIREMENTS
+
+All employees using AI tools must complete:
+- AI Usage Policy Training (annual)
+- Data Protection Basics (annual)
+- Responsible AI Practices (upon onboarding)
+
+7. CONTACT
+
+For questions about this policy:
+- IT Department: it@acme-corp.example
+- Data Protection Officer: dpo@acme-corp.example
+- AI Governance Committee: ai-governance@acme-corp.example
