@@ -14,8 +14,9 @@ import logging
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaLLM
-from langchain.chains.retrieval_qa.base import RetrievalQA
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 
 from config import (
     OLLAMA_BASE_URL,
@@ -27,10 +28,7 @@ from config import (
 
 logger = logging.getLogger(__name__)
 
-
-# System prompt for the AI assistant
-ASSISTANT_PROMPT = PromptTemplate(
-    template="""You are a precise AI assistant answering questions based on internal documents.
+PROMPT_TEMPLATE = """You are a precise AI assistant answering questions based on internal documents.
 
 Use ONLY the context provided below to answer. If the context does not contain
 enough information to answer the question, say so explicitly.
@@ -43,9 +41,7 @@ Context:
 
 Question: {question}
 
-Answer:""",
-    input_variables=["context", "question"],
-)
+Answer:"""
 
 
 class RAGEngine:
@@ -62,7 +58,8 @@ class RAGEngine:
         self.embeddings = None
         self.vector_store = None
         self.llm = None
-        self.qa_chain = None
+        self.retriever = None
+        self.chain = None
         self._initialized = False
 
     def initialize(self) -> bool:
@@ -99,18 +96,26 @@ class RAGEngine:
                 temperature=0.1,
             )
 
-            # Build QA chain
-            retriever = self.vector_store.as_retriever(
+            # Retriever
+            self.retriever = self.vector_store.as_retriever(
                 search_type="similarity",
                 search_kwargs={"k": TOP_K_RESULTS},
             )
 
-            self.qa_chain = RetrievalQA.from_chain_type(
-                llm=self.llm,
-                chain_type="stuff",
-                retriever=retriever,
-                return_source_documents=True,
-                chain_type_kwargs={"prompt": ASSISTANT_PROMPT},
+            # Build chain using LCEL (modern LangChain)
+            prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+
+            def format_docs(docs):
+                return "\n\n".join(doc.page_content for doc in docs)
+
+            self.chain = (
+                {
+                    "context": self.retriever | format_docs,
+                    "question": RunnablePassthrough(),
+                }
+                | prompt
+                | self.llm
+                | StrOutputParser()
             )
 
             self._initialized = True
@@ -142,12 +147,16 @@ class RAGEngine:
             }
 
         try:
-            result = self.qa_chain.invoke({"query": question})
+            # Get relevant docs for source info
+            relevant_docs = self.retriever.invoke(question)
+
+            # Get answer from chain
+            answer = self.chain.invoke(question)
 
             # Extract source information
             sources = []
             seen_sources = set()
-            for doc in result.get("source_documents", []):
+            for doc in relevant_docs:
                 source_name = doc.metadata.get("source", "Unknown")
                 if source_name not in seen_sources:
                     seen_sources.add(source_name)
@@ -157,9 +166,9 @@ class RAGEngine:
                     })
 
             return {
-                "answer": result["result"],
+                "answer": answer,
                 "sources": sources,
-                "chunks_used": len(result.get("source_documents", [])),
+                "chunks_used": len(relevant_docs),
             }
 
         except Exception as e:
